@@ -1,0 +1,227 @@
+definitions:
+  api.JSONError:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  model.Catalog:
+    properties:
+      created:
+        type: integer
+      description:
+        type: string
+      id:
+        type: string
+      imageLink:
+        description: NFT Representative image (IPFS preffered)
+        type: string
+      modified:
+        type: integer
+      name:
+        maxLength: 255
+        minLength: 3
+        type: string
+      nftTokensTotal:
+        description: max number of minted tokens for the catalog
+        minimum: 1
+        type: integer
+      nftTokensUsed:
+        description: currently minted tokens for the catalog
+        type: integer
+      videoLink:
+        description: YouTube or similar link
+        type: string
+    required:
+    - name
+    - nftTokensTotal
+    type: object
+  model.EmailPasswordInput:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  model.JwtTokenOutput:
+    properties:
+      token:
+        type: string
+    type: object
+  model.MailioUserStats:
+    properties:
+      address:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Mailio NFT Swagger Document
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://mail.io/tos
+  title: Mailio NFT Server API
+  version: "1.0"
+paths:
+  /v1/catalog:
+    get:
+      consumes:
+      - application/json
+      description: List Catalogs
+      parameters:
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Catalog'
+            type: array
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/api.JSONError'
+      summary: List Catalog
+      tags:
+      - Catalog
+    post:
+      consumes:
+      - application/json
+      description: When ID is given with the POST object then it's an update, otherwise
+        insert
+      parameters:
+      - description: catalog
+        in: body
+        name: catalog
+        required: true
+        schema:
+          $ref: '#/definitions/model.Catalog'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Catalog'
+        "400":
+          description: invalid input
+          schema:
+            $ref: '#/definitions/api.JSONError'
+        "401":
+          description: access denied
+          schema:
+            $ref: '#/definitions/api.JSONError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/api.JSONError'
+      security:
+      - ApiKeyAuth: []
+      summary: Upsert Catalog
+      tags:
+      - Catalog
+  /v1/catalog/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get Catalog by id
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Catalog'
+        "404":
+          description: catalog not found
+          schema:
+            $ref: '#/definitions/api.JSONError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/api.JSONError'
+      summary: Get Catalog
+      tags:
+      - Catalog
+  /v1/login:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        User login and returns JWT token
+        User considered as admin, since only adding catalogs is allowed
+      parameters:
+      - description: Email and Password required
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/model.EmailPasswordInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.JwtTokenOutput'
+        "401":
+          description: login failed
+          schema:
+            $ref: '#/definitions/api.JSONError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/api.JSONError'
+      summary: Admin login
+      tags:
+      - Auth
+  /v1/user/{mailioaddress}/stats:
+    get:
+      consumes:
+      - application/json
+      description: Caliing Mailio server to retrieve user stats
+      parameters:
+      - description: mailioaddress
+        in: path
+        name: mailioaddress
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.MailioUserStats'
+        "404":
+          description: user not found
+          schema:
+            $ref: '#/definitions/api.JSONError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/api.JSONError'
+      summary: Get Mailio User Stats
+      tags:
+      - Stats
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

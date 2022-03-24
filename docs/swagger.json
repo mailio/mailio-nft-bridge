@@ -1,0 +1,339 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Mailio NFT Swagger Document",
+        "title": "Mailio NFT Server API",
+        "termsOfService": "https://mail.io/tos",
+        "contact": {},
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "paths": {
+        "/v1/catalog": {
+            "get": {
+                "description": "List Catalogs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "List Catalog",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Catalog"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "When ID is given with the POST object then it's an update, otherwise insert",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Upsert Catalog",
+                "parameters": [
+                    {
+                        "description": "catalog",
+                        "name": "catalog",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Catalog"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Catalog"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    },
+                    "401": {
+                        "description": "access denied",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/catalog/{id}": {
+            "get": {
+                "description": "Get Catalog by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Get Catalog",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Catalog"
+                        }
+                    },
+                    "404": {
+                        "description": "catalog not found",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/login": {
+            "post": {
+                "description": "User login and returns JWT token\nUser considered as admin, since only adding catalogs is allowed",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Admin login",
+                "parameters": [
+                    {
+                        "description": "Email and Password required",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.EmailPasswordInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.JwtTokenOutput"
+                        }
+                    },
+                    "401": {
+                        "description": "login failed",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/{mailioaddress}/stats": {
+            "get": {
+                "description": "Caliing Mailio server to retrieve user stats",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Stats"
+                ],
+                "summary": "Get Mailio User Stats",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "mailioaddress",
+                        "name": "mailioaddress",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.MailioUserStats"
+                        }
+                    },
+                    "404": {
+                        "description": "user not found",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api.JSONError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Catalog": {
+            "type": "object",
+            "required": [
+                "name",
+                "nftTokensTotal"
+            ],
+            "properties": {
+                "created": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "imageLink": {
+                    "description": "NFT Representative image (IPFS preffered)",
+                    "type": "string"
+                },
+                "modified": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                },
+                "nftTokensTotal": {
+                    "description": "max number of minted tokens for the catalog",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "nftTokensUsed": {
+                    "description": "currently minted tokens for the catalog",
+                    "type": "integer"
+                },
+                "videoLink": {
+                    "description": "YouTube or similar link",
+                    "type": "string"
+                }
+            }
+        },
+        "model.EmailPasswordInput": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.JwtTokenOutput": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.MailioUserStats": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}
