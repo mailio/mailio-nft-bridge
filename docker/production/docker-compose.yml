@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  mailio-nft-bridge-production:
+    build:
+      context: ../../
+      dockerfile: docker/production/Dockerfile
+    image: mailio-nft-bridge-production
+    command: [ "/app/main", "--config", "/config/conf.yml" ]
+    volumes:
+      - ~/.datastaging:/data:rw
+      - ./../../conf-production.yml:/config/conf.yml
+    ports:
+      - '8081:8080'

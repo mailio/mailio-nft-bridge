@@ -12,6 +12,34 @@
         "version": "1.0"
     },
     "paths": {
+        "/v1/bridge/balance": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Gets the current balance of NFT bridge",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nft Bridge"
+                ],
+                "summary": "Nft Contract",
+                "responses": {
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/catalog": {
             "get": {
                 "description": "List Catalogs",
@@ -151,6 +179,131 @@
                 }
             }
         },
+        "/v1/claim": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List Latest claims",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Claiming"
+                ],
+                "summary": "List Claims",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Claim"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Mints the new NFT based on the category selected. All NFTs are on Polygon",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Claiming"
+                ],
+                "summary": "Mint new NFT",
+                "parameters": [
+                    {
+                        "description": "eip-712 signed claim",
+                        "name": "claim",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Claim"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Claim"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/claim/{address}/payload/{catalogId}": {
+            "get": {
+                "description": "gets the payload to sign by the user with their wallet",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Claiming"
+                ],
+                "summary": "Nft Claim",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "categoryId",
+                        "name": "catalogId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "address",
+                        "name": "address",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/login": {
             "post": {
                 "description": "User login and returns JWT token\nUser considered as admin, since only adding catalogs is allowed",
@@ -197,9 +350,14 @@
                 }
             }
         },
-        "/v1/user/{mailioaddress}/stats": {
+        "/v1/nftimage/list": {
             "get": {
-                "description": "Caliing Mailio server to retrieve user stats",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List all images pinned to infura",
                 "consumes": [
                     "application/json"
                 ],
@@ -207,14 +365,104 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Stats"
+                    "Nft Images"
                 ],
-                "summary": "Get Mailio User Stats",
+                "summary": "List all pinned images",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.NftImage"
+                        }
+                    },
+                    "400": {
+                        "description": "failed to read file",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    },
+                    "500": {
+                        "description": "upload failed",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/nftimage/upload": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Upload file to IPFS (on Infura) and pin it",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nft Images"
+                ],
+                "summary": "Upload to IPFS",
+                "operationId": "file.upload",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "image file",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.NftImageUploadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "failed to read file",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    },
+                    "500": {
+                        "description": "upload failed",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/nftimage/{hash}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete pinned image from local service (infura)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nft Images"
+                ],
+                "summary": "Delete pinned image",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "mailioaddress",
-                        "name": "mailioaddress",
+                        "description": "image hash",
+                        "name": "hash",
                         "in": "path",
                         "required": true
                     }
@@ -223,13 +471,60 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.MailioUserStats"
+                            "$ref": "#/definitions/model.NftPins"
                         }
                     },
-                    "404": {
-                        "description": "user not found",
+                    "400": {
+                        "description": "failed to read file",
                         "schema": {
                             "$ref": "#/definitions/api.JSONError"
+                        }
+                    },
+                    "500": {
+                        "description": "upload failed",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/claims/{walletaddress}": {
+            "get": {
+                "description": "Reads the claimed transaction log (all mailio claimed NFTs)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Claiming"
+                ],
+                "summary": "Get claimed tx log",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "users wallet address",
+                        "name": "walletaddress",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.ClaimPreview"
+                            }
                         }
                     },
                     "500": {
@@ -257,22 +552,38 @@
         "model.Catalog": {
             "type": "object",
             "required": [
+                "contentLink",
+                "description",
+                "keywords",
                 "name",
-                "nftTokensTotal"
+                "type"
             ],
             "properties": {
+                "contentLink": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "minLength": 3
+                },
                 "created": {
                     "type": "integer"
                 },
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 1000,
+                    "minLength": 3
                 },
                 "id": {
                     "type": "string"
                 },
                 "imageLink": {
-                    "description": "NFT Representative image (IPFS preffered)",
+                    "description": "CID/hash of the image",
                     "type": "string"
+                },
+                "keywords": {
+                    "description": "comma separated list of keywords",
+                    "type": "string",
+                    "maxLength": 1000,
+                    "minLength": 3
                 },
                 "modified": {
                     "type": "integer"
@@ -282,17 +593,126 @@
                     "maxLength": 255,
                     "minLength": 3
                 },
-                "nftTokensTotal": {
-                    "description": "max number of minted tokens for the catalog",
-                    "type": "integer",
-                    "minimum": 1
-                },
                 "nftTokensUsed": {
                     "description": "currently minted tokens for the catalog",
                     "type": "integer"
                 },
+                "type": {
+                    "type": "string"
+                },
                 "videoLink": {
                     "description": "YouTube or similar link",
+                    "type": "string"
+                }
+            }
+        },
+        "model.Claim": {
+            "type": "object",
+            "required": [
+                "catalogId",
+                "signature",
+                "walletAddress"
+            ],
+            "properties": {
+                "catalogId": {
+                    "description": "categoryId to be claimed",
+                    "type": "string"
+                },
+                "created": {
+                    "type": "integer"
+                },
+                "gasPrice": {
+                    "description": "gas price of the transaction",
+                    "type": "integer"
+                },
+                "keywords": {
+                    "description": "keywords (not need to be stored in db)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ClaimKeyword"
+                    }
+                },
+                "mailioAddress": {
+                    "description": "optional mailio address",
+                    "type": "string"
+                },
+                "signature": {
+                    "description": "signature of categoryId + nonce",
+                    "type": "string"
+                },
+                "tokenUri": {
+                    "description": "token uri",
+                    "type": "string"
+                },
+                "txHash": {
+                    "description": "transaction hash of the transaction",
+                    "type": "string"
+                },
+                "walletAddress": {
+                    "description": "publickey of the user retrieved from wallet",
+                    "type": "string"
+                }
+            }
+        },
+        "model.ClaimKeyword": {
+            "type": "object",
+            "properties": {
+                "word": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.ClaimPreview": {
+            "type": "object",
+            "required": [
+                "catalogId",
+                "signature",
+                "walletAddress"
+            ],
+            "properties": {
+                "catalogId": {
+                    "description": "categoryId to be claimed",
+                    "type": "string"
+                },
+                "created": {
+                    "type": "integer"
+                },
+                "gasPrice": {
+                    "description": "gas price of the transaction",
+                    "type": "integer"
+                },
+                "keywords": {
+                    "description": "keywords (not need to be stored in db)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ClaimKeyword"
+                    }
+                },
+                "mailioAddress": {
+                    "description": "optional mailio address",
+                    "type": "string"
+                },
+                "signature": {
+                    "description": "signature of categoryId + nonce",
+                    "type": "string"
+                },
+                "tokenId": {
+                    "type": "integer"
+                },
+                "tokenUri": {
+                    "description": "token uri",
+                    "type": "string"
+                },
+                "txHash": {
+                    "description": "transaction hash of the transaction",
+                    "type": "string"
+                },
+                "txStatus": {
+                    "description": "1 = success, 0 = fail",
+                    "type": "integer"
+                },
+                "walletAddress": {
+                    "description": "publickey of the user retrieved from wallet",
                     "type": "string"
                 }
             }
@@ -320,11 +740,54 @@
                 }
             }
         },
-        "model.MailioUserStats": {
+        "model.NftImage": {
             "type": "object",
             "properties": {
-                "address": {
+                "Keys": {
+                    "$ref": "#/definitions/model.NftKeys"
+                },
+                "PinLsObject": {
+                    "$ref": "#/definitions/model.NftPinLsObject"
+                }
+            }
+        },
+        "model.NftImageUploadResponse": {
+            "type": "object",
+            "properties": {
+                "hash": {
                     "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.NftKeys": {
+            "type": "object",
+            "additionalProperties": true
+        },
+        "model.NftPinLsObject": {
+            "type": "object",
+            "properties": {
+                "Cid": {
+                    "type": "string"
+                },
+                "Type": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.NftPins": {
+            "type": "object",
+            "properties": {
+                "pins": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         }

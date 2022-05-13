@@ -13,8 +13,35 @@ var Log mclog.Logger
 
 // Config - embedded global config definition
 type Config struct {
-	cfg.YamlConfig `yaml:",inline"`
-	DatastorePath  string `yaml:"datastore_path"`
+	cfg.YamlConfig   `yaml:",inline"`
+	DatastorePath    string              `yaml:"datastore_path"`
+	EtherscanConfig  EtherscanSubConfig  `yaml:"etherscan"`
+	BlockchainConfig BlockchainSubConfig `yaml:"blockchain"`
+}
+
+type EtherscanSubConfig struct {
+	Endpoint                 string `yaml:"endpoint"`
+	ApiKey                   string `yaml:"api_key"`
+	MailioNftContractAddress string `yaml:"mailio_nft_contract_address"`
+}
+
+type BlockchainSubConfig struct {
+	DefaultChainId            int                      `yaml:"default_chain_id"`
+	MailioNFTProxyAddress     string                   `yaml:"mailio_nft_proxy"`
+	MailioNFTContractAddress  string                   `yaml:"mailio_nft_contract"`
+	MailioNFTBrokerPrivateKey string                   `yaml:"broker_private_key"`
+	Endpoint                  string                   `yaml:"endpoint"`
+	InfuraKey                 string                   `yaml:"infura_key"`
+	InfuraSecret              string                   `yaml:"infura_secret"`
+	InfuraIpfsApiEndpoint     string                   `yaml:"infura_ipfs_api_endpoint"`
+	InfuraIpfsGateway         string                   `yaml:"infura_ipfs_gateway"`
+	EIP712TypedData           EIP712TypedDataSubConfig `yaml:"eip712_typed_data"`
+}
+
+type EIP712TypedDataSubConfig struct {
+	Name    string `yaml:"name"`
+	Version string `yaml:"version"`
+	Salt    string `yaml:"salt"`
 }
 
 func init() {

@@ -1,24 +1,42 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"strconv"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	lc "github.com/mailio/mailio-nft-server/config"
 	"github.com/mailio/mailio-nft-server/model"
+	"github.com/mailio/mailio-nft-server/onchain"
 	"github.com/mailio/mailio-nft-server/util"
 	"github.com/mitchellh/mapstructure"
+	"github.com/rs/xid"
 )
 
 type NftCatalogService struct {
-	environment *model.Environment
+	environment          *model.Environment
+	mailioNftContractAbi *abi.ABI
 }
 
 func NewNftCatalog(environment *model.Environment) *NftCatalogService {
+	loadedAbi, err := onchain.ReadMailioNftContractAbi()
+	if err != nil {
+		lc.Log.Error("failed to read embedded MailioNftContractAbi", err)
+		panic("failed to read embedded MailioNftContractAbi")
+	}
+	mailioNftAbi, err := abi.JSON(bytes.NewReader(loadedAbi))
+	if err != nil {
+		lc.Log.Error("failed to load MailioNftContractAbi", err)
+		panic("failed to load MailioNftContractAbi")
+	}
 	return &NftCatalogService{
-		environment: environment,
+		environment:          environment,
+		mailioNftContractAbi: &mailioNftAbi,
 	}
 }
 
@@ -63,6 +81,23 @@ func (nc *NftCatalogService) GetCatalog(id string) (*model.Catalog, error) {
 	}
 	var cat model.Catalog
 	err = mapstructure.Decode(catalogMap, &cat)
+
+	// querying smart contract to get number of claimed NFTs
+	xidID, _ := xid.FromString(cat.ID)
+	var catId [12]byte
+	copy(catId[:], xidID.Bytes())
+	categoryCountBigInt, cErr := nc.environment.NftContract.CategoryTokenCount(&bind.CallOpts{}, catId)
+	if cErr != nil {
+		lc.Log.Error("failed to retrieve category count on blockchain", cErr)
+		// ignores the error (it will fail within contract if more than 100 claimed)
+	}
+	tokensClaimed, convErr := strconv.Atoi(strconv.FormatUint(categoryCountBigInt.Uint64(), 10))
+	if convErr != nil {
+		lc.Log.Error("failed to convert category count to int", convErr)
+		// ignores the error (it will fail within contract if more than 100 claimed)
+	}
+	cat.NftTokensUsed = tokensClaimed
+
 	return &cat, err
 }
 
