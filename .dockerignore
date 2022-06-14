@@ -17,6 +17,7 @@
 data/*
 conf.yaml
 conf-production.yml
+conf-prod.yml
 conf-staging.yml
 *.md
 .vscode

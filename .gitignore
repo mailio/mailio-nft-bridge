@@ -22,6 +22,8 @@ go.work
 .vscode
 data/*
 conf-production.yml
+conf-prod.yml
+conf-prod.yaml
 conf-production.yaml
 conf-staging.yml
 conf-staging.yaml

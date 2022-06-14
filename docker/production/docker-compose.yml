@@ -5,10 +5,10 @@ services:
     build:
       context: ../../
       dockerfile: docker/production/Dockerfile
-    image: mailio-nft-bridge
+    image: mailio-nft-bridge-prod
     command: [ "/app/main", "--config", "/config/conf.yml" ]
     volumes:
-      - ~/.dataprod:/data:rw
+      - /home/igor/Downloads/nftbridgedata:/data:rw
       - ./../../conf-prod.yml:/config/conf.yml
     ports:
-      - '8081:8080'
+      - '8080:8080'
