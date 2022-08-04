@@ -67,6 +67,9 @@ definitions:
       mailioAddress:
         description: optional mailio address
         type: string
+      recaptcha_token:
+        description: recaptcha v3 token // required
+        type: string
       signature:
         description: signature of categoryId + nonce
         type: string
@@ -81,6 +84,7 @@ definitions:
         type: string
     required:
     - catalogId
+    - recaptcha_token
     - signature
     - walletAddress
     type: object
@@ -107,6 +111,9 @@ definitions:
       mailioAddress:
         description: optional mailio address
         type: string
+      recaptcha_token:
+        description: recaptcha v3 token // required
+        type: string
       signature:
         description: signature of categoryId + nonce
         type: string
@@ -126,6 +133,7 @@ definitions:
         type: string
     required:
     - catalogId
+    - recaptcha_token
     - signature
     - walletAddress
     type: object
@@ -344,6 +352,14 @@ paths:
             items:
               $ref: '#/definitions/model.Claim'
             type: array
+        "400":
+          description: invalid input
+          schema:
+            $ref: '#/definitions/api.JSONError'
+        "403":
+          description: captacha failed
+          schema:
+            $ref: '#/definitions/api.JSONError'
         "500":
           description: internal server error
           schema:

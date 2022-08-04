@@ -8,15 +8,17 @@ import (
 const ClaimTable = "claim"
 
 type Claim struct {
-	CatalogId     string         `json:"catalogId" validate:"required"`     // categoryId to be claimed
-	WalletAddress string         `json:"walletAddress" validate:"required"` // publickey of the user retrieved from wallet
-	MailioAddress string         `json:"mailioAddress,omitempty"`           // optional mailio address
-	Signature     string         `json:"signature" validate:"required"`     // signature of categoryId + nonce
-	GasPrice      uint64         `json:"gasPrice"`                          // gas price of the transaction
-	TxHash        string         `json:"txHash,omitempty"`                  // transaction hash of the transaction
-	TokenUri      string         `json:"tokenUri,omitempty"`                // token uri
-	Keywords      []ClaimKeyword `json:"keywords,omitempty"`                // keywords (not need to be stored in db)
-	Created       int64          `json:"created"`
+	CatalogId      string `json:"catalogId" validate:"required"`       // categoryId to be claimed
+	WalletAddress  string `json:"walletAddress" validate:"required"`   // publickey of the user retrieved from wallet
+	MailioAddress  string `json:"mailioAddress,omitempty"`             // optional mailio address
+	Signature      string `json:"signature" validate:"required"`       // signature of categoryId + nonce
+	ReCaptchaToken string `json:"recaptcha_token" validate:"required"` // recaptcha v3 token // required
+	GasPrice       uint64 `json:"gasPrice"`                            // gas price of the transaction
+	TxHash         string `json:"txHash,omitempty"`                    // transaction hash of the transaction
+	TokenUri       string `json:"tokenUri,omitempty"`                  // token uri
+
+	Keywords []ClaimKeyword `json:"keywords,omitempty"` // keywords (not need to be stored in db)
+	Created  int64          `json:"created"`
 }
 
 // preview of the claimed token (not need to be stored in db)
@@ -29,6 +31,13 @@ type ClaimPreview struct {
 
 type ClaimKeyword struct {
 	Word string `json:"word"`
+}
+
+type ReCaptchaV3Response struct {
+	Success            bool     `json:"success"`
+	ChallengeTimestamp string   `json:"challenge_ts"` //  timestamp of the challenge load (ISO format yyyy-MM-dd'T'HH:mm:ssZZ)
+	Hostname           string   `json:"hostname"`     // the hostname of the site where the reCAPTCHA was solved
+	ErrorCodes         []string `json:"error-codes"`  // optional error codes
 }
 
 // EIP-712 -- https://eips.ethereum.org/EIPS/eip-712
