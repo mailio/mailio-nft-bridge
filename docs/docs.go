@@ -265,6 +265,18 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "400": {
+                        "description": "invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    },
+                    "403": {
+                        "description": "captacha failed",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    },
                     "500": {
                         "description": "internal server error",
                         "schema": {
@@ -619,6 +631,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "catalogId",
+                "recaptcha_token",
                 "signature",
                 "walletAddress"
             ],
@@ -643,6 +656,10 @@ const docTemplate = `{
                 },
                 "mailioAddress": {
                     "description": "optional mailio address",
+                    "type": "string"
+                },
+                "recaptcha_token": {
+                    "description": "recaptcha v3 token // required",
                     "type": "string"
                 },
                 "signature": {
@@ -675,6 +692,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "catalogId",
+                "recaptcha_token",
                 "signature",
                 "walletAddress"
             ],
@@ -699,6 +717,10 @@ const docTemplate = `{
                 },
                 "mailioAddress": {
                     "description": "optional mailio address",
+                    "type": "string"
+                },
+                "recaptcha_token": {
+                    "description": "recaptcha v3 token // required",
                     "type": "string"
                 },
                 "signature": {

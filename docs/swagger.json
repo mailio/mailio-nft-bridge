@@ -256,6 +256,18 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    },
+                    "403": {
+                        "description": "captacha failed",
+                        "schema": {
+                            "$ref": "#/definitions/api.JSONError"
+                        }
+                    },
                     "500": {
                         "description": "internal server error",
                         "schema": {
@@ -610,6 +622,7 @@
             "type": "object",
             "required": [
                 "catalogId",
+                "recaptcha_token",
                 "signature",
                 "walletAddress"
             ],
@@ -634,6 +647,10 @@
                 },
                 "mailioAddress": {
                     "description": "optional mailio address",
+                    "type": "string"
+                },
+                "recaptcha_token": {
+                    "description": "recaptcha v3 token // required",
                     "type": "string"
                 },
                 "signature": {
@@ -666,6 +683,7 @@
             "type": "object",
             "required": [
                 "catalogId",
+                "recaptcha_token",
                 "signature",
                 "walletAddress"
             ],
@@ -690,6 +708,10 @@
                 },
                 "mailioAddress": {
                     "description": "optional mailio address",
+                    "type": "string"
+                },
+                "recaptcha_token": {
+                    "description": "recaptcha v3 token // required",
                     "type": "string"
                 },
                 "signature": {

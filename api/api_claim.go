@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/go-resty/resty/v2"
 	"github.com/jinzhu/copier"
 	lc "github.com/mailio/mailio-nft-server/config"
 	"github.com/mailio/mailio-nft-server/model"
@@ -15,16 +17,18 @@ import (
 )
 
 type ClaimAPI struct {
-	service        *service.NftClaimService
-	catalogService *service.NftCatalogService
-	validate       *validator.Validate
+	service             *service.NftClaimService
+	catalogService      *service.NftCatalogService
+	validate            *validator.Validate
+	httpClientReCaptcha *resty.Client
 }
 
 func NewClaimAPI(service *service.NftClaimService, catalogService *service.NftCatalogService) *ClaimAPI {
 	return &ClaimAPI{
-		service:        service,
-		catalogService: catalogService,
-		validate:       validator.New(),
+		service:             service,
+		catalogService:      catalogService,
+		validate:            validator.New(),
+		httpClientReCaptcha: resty.New().SetHostURL(lc.Conf.ReCaptchaV3.Host),
 	}
 }
 
@@ -66,6 +70,8 @@ func (ca *ClaimAPI) ListClaims(c *gin.Context) {
 // @Tags         Claiming
 // @Param        claim  body      model.Claim  true  "eip-712 signed claim"
 // @Success      200    {array}   model.Claim
+// @Failure      403    {object}  api.JSONError  "captacha failed"
+// @Failure      400    {object}  api.JSONError  "invalid input"
 // @Failure      500    {object}  api.JSONError  "internal server error"
 // @Accept       json
 // @Produce      json
@@ -85,6 +91,30 @@ func (ca *ClaimAPI) MintClaim(c *gin.Context) {
 	catalog, cErr := ca.catalogService.GetCatalog(claim.CatalogId)
 	if cErr != nil {
 		AbortWithError(c, http.StatusBadRequest, "Catalog invalid")
+		return
+	}
+
+	// validate captcha v3
+	reCaptchaResp, captchaErr := ca.httpClientReCaptcha.R().
+		SetHeader("Content-Type", "application/x-www-form-urlencoded").
+		SetHeader("Accept", "application/json").
+		SetHeader("Cache-Control", "no-cache").
+		SetFormData(map[string]string{
+			"secret":   lc.Conf.ReCaptchaV3.Secret,
+			"response": claim.ReCaptchaToken,
+		}).Post("")
+	if captchaErr != nil {
+		AbortWithError(c, http.StatusInternalServerError, "Failed retrieving recaptcha response")
+		return
+	}
+	var reCaptcha model.ReCaptchaV3Response
+	reErr := json.Unmarshal(reCaptchaResp.Body(), &reCaptcha)
+	if reErr != nil {
+		AbortWithError(c, http.StatusInternalServerError, "Failed parsing recaptcha response")
+		return
+	}
+	if !reCaptcha.Success {
+		AbortWithError(c, http.StatusForbidden, "Failed captcha validation")
 		return
 	}
 

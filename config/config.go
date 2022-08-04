@@ -14,9 +14,10 @@ var Log mclog.Logger
 // Config - embedded global config definition
 type Config struct {
 	cfg.YamlConfig   `yaml:",inline"`
-	DatastorePath    string              `yaml:"datastore_path"`
-	EtherscanConfig  EtherscanSubConfig  `yaml:"etherscan"`
-	BlockchainConfig BlockchainSubConfig `yaml:"blockchain"`
+	DatastorePath    string               `yaml:"datastore_path"`
+	EtherscanConfig  EtherscanSubConfig   `yaml:"etherscan"`
+	BlockchainConfig BlockchainSubConfig  `yaml:"blockchain"`
+	ReCaptchaV3      ReCaptchaV3SubConfig `yaml:"recaptcha"`
 }
 
 type EtherscanSubConfig struct {
@@ -42,6 +43,11 @@ type EIP712TypedDataSubConfig struct {
 	Name    string `yaml:"name"`
 	Version string `yaml:"version"`
 	Salt    string `yaml:"salt"`
+}
+
+type ReCaptchaV3SubConfig struct {
+	Secret string `yaml:"secret"`
+	Host   string `yaml:"host"`
 }
 
 func init() {
