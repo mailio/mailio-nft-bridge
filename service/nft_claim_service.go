@@ -247,19 +247,22 @@ func (ecs *NftClaimService) MintForUser(claim *model.Claim, catalog *model.Catal
 
 	// store minted tx to database
 	cl := &model.Claim{
-		CatalogId:     catalog.ID,
-		TxHash:        tx.Hash().Hex(),
-		TokenUri:      tokenURI,
-		Signature:     claim.Signature,
-		WalletAddress: claim.WalletAddress,
-		GasPrice:      tx.GasPrice().Uint64(),
-		Created:       time.Now().UnixMilli(),
+		CatalogId:      catalog.ID,
+		TxHash:         tx.Hash().Hex(),
+		TokenUri:       tokenURI,
+		Signature:      claim.Signature,
+		ReCaptchaToken: claim.ReCaptchaToken,
+		VisitorId:      claim.VisitorId,
+		WalletAddress:  claim.WalletAddress,
+		GasPrice:       tx.GasPrice().Uint64(),
+		Created:        time.Now().UnixMilli(),
 	}
 	claimed, claimErr := ecs.PutClaimedNFT(cl)
 	if claimErr != nil {
 		lc.Log.Error("failed to put claim", claimErr)
 		return tx, nil, nil
 	}
+
 	lc.Log.Info("Succesfully minted new mailio NFT at transaction", tx.Hash().Hex())
 	return tx, claimed, nil
 }
@@ -278,7 +281,60 @@ func (ecs *NftClaimService) PutClaimedNFT(claim *model.Claim) (*model.Claim, err
 		lc.Log.Error("failed to create new catalog", err)
 		return nil, err
 	}
+	// insert into the database users fingerprint of the claim
+	_, fErr := ecs.PutVisitorClaimFingerprint(&model.ClaimFingerprint{
+		CatalogId: claim.CatalogId,
+		VisitorId: claim.VisitorId,
+	})
+	if fErr != nil {
+		lc.Log.Error("failed to put claim fingerprint", fErr)
+		// deliberately ignore this error
+	}
 	return claim, nil
+}
+
+// PutVisitorClaimFingerprint inserts a new fingerprint to the database for the specified catalogId
+func (ecs *NftClaimService) PutVisitorClaimFingerprint(finger *model.ClaimFingerprint) (*model.ClaimFingerprint, error) {
+	if finger.CatalogId != "" && finger.VisitorId != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), model.DefaultTimeout)
+		defer cancel()
+
+		id := finger.CatalogId + "_" + finger.VisitorId // unique per catalogId
+		m, err := util.MarshalToBytes(finger)
+		err = ecs.environment.DB.Put(ctx, util.CreateKey(model.ClaimFingerprintTable, id), m)
+		if err != nil {
+			lc.Log.Error("failed to create new fingerprint claim", err)
+			return nil, err
+		}
+	}
+	return finger, nil
+}
+
+// GetVisitorClaimFingerprint returns the fingerprint of the specified catalogId and visitorId
+// or model.ErrNotFound if not found
+func (ecs *NftClaimService) GetVisitorClaimFingerprint(catalogId, visitorId string) (*model.ClaimFingerprint, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), model.DefaultTimeout)
+	defer cancel()
+
+	id := catalogId + "_" + visitorId // unique per catalogId
+	m, err := ecs.environment.DB.Get(ctx, util.CreateKey(model.ClaimFingerprintTable, id))
+	if err != nil {
+		if err == datastore.ErrNotFound {
+			return nil, model.ErrNotFound
+		}
+		lc.Log.Error("failed to get fingerprint claim", err)
+		return nil, err
+	}
+
+	var finger model.ClaimFingerprint
+	fingerMap, err := util.UnmarshalFromBytes(m)
+	if err != nil {
+		lc.Log.Error("failed to unmarshal fingerprint claim", err)
+		return nil, err
+	}
+	var clm model.ClaimFingerprint
+	err = mapstructure.Decode(fingerMap, &clm)
+	return &finger, err
 }
 
 // returns stored claim if exists, or ErrNotFound error

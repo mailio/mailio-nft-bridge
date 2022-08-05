@@ -6,19 +6,27 @@ import (
 )
 
 const ClaimTable = "claim"
+const ClaimFingerprintTable = "fingerprint"
 
 type Claim struct {
-	CatalogId      string `json:"catalogId" validate:"required"`       // categoryId to be claimed
-	WalletAddress  string `json:"walletAddress" validate:"required"`   // publickey of the user retrieved from wallet
-	MailioAddress  string `json:"mailioAddress,omitempty"`             // optional mailio address
-	Signature      string `json:"signature" validate:"required"`       // signature of categoryId + nonce
-	ReCaptchaToken string `json:"recaptcha_token" validate:"required"` // recaptcha v3 token // required
-	GasPrice       uint64 `json:"gasPrice"`                            // gas price of the transaction
-	TxHash         string `json:"txHash,omitempty"`                    // transaction hash of the transaction
-	TokenUri       string `json:"tokenUri,omitempty"`                  // token uri
+	CatalogId      string         `json:"catalogId" validate:"required"`      // categoryId to be claimed
+	WalletAddress  string         `json:"walletAddress" validate:"required"`  // publickey of the user retrieved from wallet
+	MailioAddress  string         `json:"mailioAddress,omitempty"`            // optional mailio address
+	Signature      string         `json:"signature" validate:"required"`      // signature of categoryId + nonce
+	ReCaptchaToken string         `json:"recaptchaToken" validate:"required"` // recaptcha v3 token // required
+	GasPrice       uint64         `json:"gasPrice"`                           // gas price of the transaction
+	TxHash         string         `json:"txHash,omitempty"`                   // transaction hash of the transaction
+	TokenUri       string         `json:"tokenUri,omitempty"`                 // token uri
+	VisitorId      string         `json:"visitorId" validate:"required"`      // visitor id
+	Keywords       []ClaimKeyword `json:"keywords,omitempty"`                 // keywords (not need to be stored in db)
+	Created        int64          `json:"created"`
+}
 
-	Keywords []ClaimKeyword `json:"keywords,omitempty"` // keywords (not need to be stored in db)
-	Created  int64          `json:"created"`
+// fingerprinting each catalogId claim in order to prevent users
+// getting the same catalogId claim multiple times
+type ClaimFingerprint struct {
+	CatalogId string `json:"catalogId" validate:"required"` // categoryId to be claimed
+	VisitorId string `json:"visitorId" validate:"required"` // fingerprint of the user
 }
 
 // preview of the claimed token (not need to be stored in db)

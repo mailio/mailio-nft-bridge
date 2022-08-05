@@ -94,6 +94,17 @@ func (ca *ClaimAPI) MintClaim(c *gin.Context) {
 		return
 	}
 
+	_, fpErr := ca.service.GetVisitorClaimFingerprint(claim.CatalogId, claim.VisitorId)
+	if fpErr == nil {
+		AbortWithError(c, http.StatusBadRequest, "You've already claimed NFT for this catalog")
+		return
+	}
+	if fpErr != nil && fpErr != model.ErrNotFound {
+		// some other error encountered, but expected not found error
+		AbortWithError(c, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+
 	// validate captcha v3
 	reCaptchaResp, captchaErr := ca.httpClientReCaptcha.R().
 		SetHeader("Content-Type", "application/x-www-form-urlencoded").
